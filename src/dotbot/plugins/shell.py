@@ -10,6 +10,7 @@ class Shell(Plugin):
     """
 
     _directive = "shell"
+    SUPPORTS_DRY_RUN = True
     _has_shown_override_message = False
 
     def can_handle(self, directive: str) -> bool:
@@ -52,13 +53,17 @@ class Shell(Plugin):
                 self._log.lowinfo(f"{msg} [{cmd}]")
             stdout = options.get("stdout", stdout)
             stderr = options.get("stderr", stderr)
-            ret = shell_command(
-                cmd,
-                cwd=self._context.base_directory(),
-                enable_stdin=stdin,
-                enable_stdout=stdout,
-                enable_stderr=stderr,
-            )
+            if self.dry_run():
+                self._log.lowinfo(f"Would run: {cmd}")
+                ret = 0
+            else:
+                ret = shell_command(
+                    cmd,
+                    cwd=self._context.base_directory(),
+                    enable_stdin=stdin,
+                    enable_stdout=stdout,
+                    enable_stderr=stderr,
+                )
             if ret != 0:
                 success = False
                 self._log.warning(f"Command [{cmd}] failed")

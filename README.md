@@ -464,6 +464,11 @@ You can call `./install --except [list of directives]`, such as `./install
 --except shell`, and Dotbot will run all the sections of the config file except
 the ones listed.
 
+### `--dry-run`
+
+You can call `./install --dry-run` to see what actions would be taken without
+making any changes.
+
 ## Wiki
 
 Check out the [Dotbot wiki][wiki] for more information, tips and tricks,

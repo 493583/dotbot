@@ -51,6 +51,13 @@ def add_options(parser: ArgumentParser) -> None:
     parser.add_argument("--no-color", dest="no_color", action="store_true", help="disable color output")
     parser.add_argument("--version", action="store_true", help="show program's version number and exit")
     parser.add_argument(
+        "-n",
+        "--dry-run",
+        dest="dry_run",
+        action="store_true",
+        help="show what actions would be taken without performing them",
+    )
+    parser.add_argument(
         "-x",
         "--exit-on-failure",
         dest="exit_on_failure",

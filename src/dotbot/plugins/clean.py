@@ -11,6 +11,7 @@ class Clean(Plugin):
     """
 
     _directive = "clean"
+    SUPPORTS_DRY_RUN = True
 
     def can_handle(self, directive: str) -> bool:
         return directive == self._directive
@@ -58,7 +59,8 @@ class Clean(Plugin):
                     points_at = points_at[4:]
                 if self._in_directory(path, self._context.base_directory()) or force:
                     self._log.lowinfo(f"Removing invalid link {path} -> {points_at}")
-                    os.remove(path)
+                    if not self.dry_run():
+                        os.remove(path)
                 else:
                     self._log.lowinfo(f"Link {path} -> {points_at} not removed.")
         return True
