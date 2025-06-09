@@ -10,6 +10,7 @@ class Create(Plugin):
     """
 
     _directive = "create"
+    SUPPORTS_DRY_RUN = True
 
     def can_handle(self, directive: str) -> bool:
         return directive == self._directive
@@ -48,15 +49,18 @@ class Create(Plugin):
         success = True
         if not self._exists(path):
             self._log.debug(f"Trying to create path {path} with mode {mode}")
-            try:
-                self._log.lowinfo(f"Creating path {path}")
-                os.makedirs(path, mode)
-                # On Windows, the *mode* argument to `os.makedirs()` is ignored.
-                # The mode must be set explicitly in a follow-up call.
-                os.chmod(path, mode)
-            except OSError:
-                self._log.warning(f"Failed to create path {path}")
-                success = False
+            if self.dry_run():
+                self._log.lowinfo(f"Would create path {path}")
+            else:
+                try:
+                    self._log.lowinfo(f"Creating path {path}")
+                    os.makedirs(path, mode)
+                    # On Windows, the *mode* argument to `os.makedirs()` is ignored.
+                    # The mode must be set explicitly in a follow-up call.
+                    os.chmod(path, mode)
+                except OSError:
+                    self._log.warning(f"Failed to create path {path}")
+                    success = False
         else:
             self._log.lowinfo(f"Path exists {path}")
         return success

@@ -5,6 +5,7 @@ from dotbot.messenger import Messenger
 
 
 class Plugin:
+    SUPPORTS_DRY_RUN = False
     """
     Abstract base class for commands that process directives.
     """
@@ -12,6 +13,10 @@ class Plugin:
     def __init__(self, context: Context):
         self._context = context
         self._log = Messenger()
+        self._dry_run = getattr(context.options(), "dry_run", False)
+
+    def dry_run(self) -> bool:
+        return self._dry_run
 
     def can_handle(self, directive: str) -> bool:
         """

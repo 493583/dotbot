@@ -64,6 +64,12 @@ class Dispatcher:
                     # keep going, let other plugins handle this if they want
                 for plugin in self._plugins:
                     if plugin.can_handle(action):
+                        if self._context.options().dry_run and not plugin.SUPPORTS_DRY_RUN:
+                            self._log.info(
+                                f"Skipping action {action} for plugin {plugin.__class__.__name__} in dry-run mode"
+                            )
+                            handled = True
+                            continue
                         try:
                             local_success = plugin.handle(action, task[action])
                             if not local_success and self._exit:

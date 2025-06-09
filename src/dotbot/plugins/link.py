@@ -14,6 +14,7 @@ class Link(Plugin):
     """
 
     _directive = "link"
+    SUPPORTS_DRY_RUN = True
 
     def can_handle(self, directive: str) -> bool:
         return directive == self._directive
@@ -211,13 +212,16 @@ class Link(Plugin):
         parent = os.path.abspath(os.path.join(os.path.expanduser(path), os.pardir))
         if not self._exists(parent):
             self._log.debug(f"Try to create parent: {parent}")
-            try:
-                os.makedirs(parent)
-            except OSError:
-                self._log.warning(f"Failed to create directory {parent}")
-                success = False
+            if self.dry_run():
+                self._log.lowinfo(f"Would create directory {parent}")
             else:
-                self._log.lowinfo(f"Creating directory {parent}")
+                try:
+                    os.makedirs(parent)
+                except OSError:
+                    self._log.warning(f"Failed to create directory {parent}")
+                    success = False
+                else:
+                    self._log.lowinfo(f"Creating directory {parent}")
         return success
 
     def _delete(self, source: str, path: str, *, relative: bool, canonical_path: bool, force: bool) -> bool:
@@ -236,23 +240,27 @@ class Link(Plugin):
             self._lexists(path) and not self._is_link(path)
         ):
             removed = False
-            try:
-                if os.path.islink(fullpath):
-                    os.unlink(fullpath)
+            if self.dry_run():
+                if os.path.islink(fullpath) or force:
+                    self._log.lowinfo(f"Would remove {path}")
                     removed = True
-                elif force:
-                    if os.path.isdir(fullpath):
-                        shutil.rmtree(fullpath)
-                        removed = True
-                    else:
-                        os.remove(fullpath)
-                        removed = True
-            except OSError:
-                self._log.warning(f"Failed to remove {path}")
-                success = False
             else:
-                if removed:
-                    self._log.lowinfo(f"Removing {path}")
+                try:
+                    if os.path.islink(fullpath):
+                        os.unlink(fullpath)
+                        removed = True
+                    elif force:
+                        if os.path.isdir(fullpath):
+                            shutil.rmtree(fullpath)
+                            removed = True
+                        else:
+                            os.remove(fullpath)
+                            removed = True
+                except OSError:
+                    self._log.warning(f"Failed to remove {path}")
+                    success = False
+            if removed:
+                self._log.lowinfo(f"Removing {path}")
         return success
 
     def _relative_path(self, source: str, destination: str) -> str:
@@ -289,6 +297,9 @@ class Link(Plugin):
         # directory, and if source is relative, it will be relative to the
         # destination directory
         if not self._lexists(link_name) and (ignore_missing or self._exists(absolute_source)):
+            if self.dry_run():
+                self._log.lowinfo(f"Would create {link_type} {link_name} -> {source}")
+                return True
             try:
                 if link_type == "symlink":
                     os.symlink(source, destination)
